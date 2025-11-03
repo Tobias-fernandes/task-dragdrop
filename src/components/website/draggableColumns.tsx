@@ -48,7 +48,7 @@ const DraggableColumns: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-8 bg-background min-h-screen">
+    <section className="flex flex-col gap-6 p-8 bg-background min-h-screen mt-20">
       <div className="w-full max-w-lg mx-auto flex flex-col gap-3">
         <Input
           type="text"
@@ -128,7 +128,7 @@ const DraggableColumns: React.FC = () => {
                               <Button
                                 variant="ghost"
                                 onClick={() => removeTask(column.id, task.id)}
-                                className="absolute hidden group-hover:flex right-2 -translate-y-1/2 top-1/2 p-0 hover:text-red-500"
+                                className="absolute md:hidden md:group-hover:flex right-2 -translate-y-1/2 top-1/2 p-0 max-sm:text-red-500 hover:text-red-500"
                               >
                                 <X />
                               </Button>
@@ -146,7 +146,7 @@ const DraggableColumns: React.FC = () => {
           })}
         </div>
       </DragDropContext>
-    </div>
+    </section>
   );
 };
 
