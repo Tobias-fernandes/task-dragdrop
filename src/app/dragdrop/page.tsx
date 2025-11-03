@@ -9,8 +9,12 @@ import { X } from "lucide-react";
 import ModalCreateColumn from "./components/ModalCreateColumn";
 import { DragDrop } from "./hooks/dragdrop";
 import { useTaskStore } from "@/store/tasks";
+import useWsTasks from "@/hooks/useWsTasks";
 
 const DraggableColumns: React.FC = () => {
+  // mount websocket sync (keeps Zustand store in sync with server)
+  useWsTasks();
+
   const {
     search,
     newTaskContent,
