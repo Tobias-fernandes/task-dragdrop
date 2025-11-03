@@ -1,16 +1,16 @@
-import { ITask, IWords } from "@/shared/types/words";
+import { ITask, ITasks } from "@/shared/types/tasks";
 import { DropResult } from "@hello-pangea/dnd";
-interface IWordState {
+interface ITaskState {
   state: {
-    words: IWords;
+    tasks: ITasks;
   };
   actions: {
     addTask: (columnId: string, task: ITask) => void;
     removeTask: (columnId: string, taskId: string) => void;
-    clearWords: () => void;
+    clearTasks: () => void;
     reorderColumns: (result: DropResult) => void;
     createColumn: (title: string, id?: string) => void;
   };
 }
 
-export type { IWordState };
+export type { ITaskState };

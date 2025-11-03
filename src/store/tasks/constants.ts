@@ -1,6 +1,6 @@
-import { IWords } from "@/shared/types/words";
+import { ITasks } from "@/shared/types/tasks";
 
-const initialWordsData: IWords = {
+const initialTasksData: ITasks = {
   todo: {
     id: "todo",
     title: "To Do",
@@ -20,4 +20,4 @@ const initialWordsData: IWords = {
   },
 };
 
-export { initialWordsData };
+export { initialTasksData };

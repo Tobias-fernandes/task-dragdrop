@@ -1,14 +1,10 @@
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
-
-const handleGoodMorning = () => {
-  const hours = new Date().getHours();
-  if (hours < 12) return "Good morning";
-  if (hours >= 12 && hours < 18) return "Good afternoon";
-  return "Good evening";
-};
+import { Button } from "@/components/ui/button";
+import { useWebsite } from "./hooks/useWebsite";
 
 const Home: React.FC = () => {
+  const { handleGoodMorning } = useWebsite();
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen gap-4">
       <h1 className="font-extrabold text-3xl md:text-7xl">

@@ -1,5 +1,5 @@
 import { DropResult } from "@hello-pangea/dnd";
-import { Columns } from "../types/words";
+import { Columns } from "../types/tasks";
 
 /**
  * Função genérica para reordenar tasks de um conjunto de colunas.

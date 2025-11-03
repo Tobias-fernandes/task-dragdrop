@@ -1,6 +1,3 @@
-"use client";
-
-import { useState, HTMLAttributes } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,13 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useWordStore } from "@/store/words";
-import { toast } from "sonner";
-
-interface IModalCreateColumn extends HTMLAttributes<HTMLDivElement> {
-  title: string;
-  buttonClassname?: string;
-}
+import { IModalCreateColumn } from "./types";
+import { useModalCreateColumn } from "./hooks/useModalCreateColumn";
 
 const ModalCreateColumn: React.FC<IModalCreateColumn> = ({
   title,
@@ -28,22 +20,14 @@ const ModalCreateColumn: React.FC<IModalCreateColumn> = ({
   ...props
 }) => {
   const {
-    actions: { createColumn },
-  } = useWordStore();
+    dialog,
+    newColumnName,
 
-  const [newColumnName, setNewColumnName] = useState<string>("");
-  const [dialog, setDialog] = useState<boolean>(false);
+    setDialog,
+    handleCreateColumn,
+    setNewColumnName,
+  } = useModalCreateColumn();
 
-  const handleCreateColumn = () => {
-    try {
-      createColumn(newColumnName);
-      setNewColumnName("");
-      setDialog(false);
-      toast.success("Task has been created");
-    } catch (err) {
-      toast.error(`Something went wrong: ${err}`);
-    }
-  };
   return (
     <div {...props}>
       <Dialog open={dialog} onOpenChange={setDialog}>

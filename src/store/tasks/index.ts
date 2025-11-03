@@ -1,38 +1,38 @@
-import { ITask, IWords } from "@/shared/types/words";
+import { ITask, ITasks } from "@/shared/types/tasks";
 import { create } from "zustand";
-import { IWordState } from "./types";
-import { initialWordsData } from "./constants";
+import { ITaskState } from "./types";
+import { initialTasksData } from "./constants";
 
-const initialWords = initialWordsData;
+const initialTasks = initialTasksData;
 
-export const useWordStore = create<IWordState>((set) => ({
+const useTaskStore = create<ITaskState>((set) => ({
   state: {
-    words: initialWords,
+    tasks: initialTasks,
   },
   actions: {
-    addTask: (columnId: keyof IWords, task: ITask) =>
+    addTask: (columnId: keyof ITasks, task: ITask) =>
       set((state) => ({
         state: {
           ...state.state,
-          words: {
-            ...state.state.words,
+          tasks: {
+            ...state.state.tasks,
             [columnId]: {
-              ...state.state.words[columnId],
-              tasks: [...state.state.words[columnId].tasks, task],
+              ...state.state.tasks[columnId],
+              tasks: [...state.state.tasks[columnId].tasks, task],
             },
           },
         },
       })),
 
-    removeTask: (columnId: keyof IWords, taskId: string) =>
+    removeTask: (columnId: keyof ITasks, taskId: string) =>
       set((state) => ({
         state: {
           ...state.state,
-          words: {
-            ...state.state.words,
+          tasks: {
+            ...state.state.tasks,
             [columnId]: {
-              ...state.state.words[columnId],
-              tasks: state.state.words[columnId].tasks.filter(
+              ...state.state.tasks[columnId],
+              tasks: state.state.tasks[columnId].tasks.filter(
                 (t: ITask) => t.id !== taskId
               ),
             },
@@ -40,10 +40,10 @@ export const useWordStore = create<IWordState>((set) => ({
         },
       })),
 
-    clearWords: () =>
+    clearTasks: () =>
       set(() => ({
         state: {
-          words: {
+          tasks: {
             todo: {
               id: "todo",
               title: "To Do",
@@ -63,8 +63,8 @@ export const useWordStore = create<IWordState>((set) => ({
         const { source, destination } = result;
         if (!destination) return state;
 
-        const sourceCol = state.state.words[source.droppableId];
-        const destCol = state.state.words[destination.droppableId];
+        const sourceCol = state.state.tasks[source.droppableId];
+        const destCol = state.state.tasks[destination.droppableId];
         const sourceTasks = Array.from(sourceCol.tasks);
         const destTasks = Array.from(destCol.tasks);
         const [movedTask] = sourceTasks.splice(source.index, 1);
@@ -74,8 +74,8 @@ export const useWordStore = create<IWordState>((set) => ({
           return {
             state: {
               ...state.state,
-              words: {
-                ...state.state.words,
+              tasks: {
+                ...state.state.tasks,
                 [source.droppableId]: {
                   ...sourceCol,
                   tasks: sourceTasks,
@@ -89,8 +89,8 @@ export const useWordStore = create<IWordState>((set) => ({
           return {
             state: {
               ...state.state,
-              words: {
-                ...state.state.words,
+              tasks: {
+                ...state.state.tasks,
                 [source.droppableId]: {
                   ...sourceCol,
                   tasks: sourceTasks,
@@ -115,8 +115,8 @@ export const useWordStore = create<IWordState>((set) => ({
         return {
           state: {
             ...state.state,
-            words: {
-              ...state.state.words,
+            tasks: {
+              ...state.state.tasks,
               [id]: {
                 id,
                 title,
@@ -128,3 +128,5 @@ export const useWordStore = create<IWordState>((set) => ({
       }),
   },
 }));
+
+export { useTaskStore };
