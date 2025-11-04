@@ -107,18 +107,7 @@ const useTaskStore = create<ITaskState>((set) => ({
     clearTasks: () =>
       set(() => ({
         state: {
-          tasks: {
-            todo: {
-              id: "todo",
-              title: "To Do",
-              tasks: [],
-            },
-            doing: {
-              id: "doing",
-              title: "Doing",
-              tasks: [],
-            },
-          },
+          tasks: {},
         },
       })),
 

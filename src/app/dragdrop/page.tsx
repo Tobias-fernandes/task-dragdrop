@@ -8,7 +8,7 @@ import {
 } from "@hello-pangea/dnd";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ITask } from "@/shared/types/tasks";
-import { X, GripVertical } from "lucide-react";
+import { X, GripVertical, Search, PlusCircle } from "lucide-react";
 import { ChangeEvent, useState } from "react";
 import { formatText } from "@/shared/utils/formatText";
 
@@ -108,14 +108,7 @@ const ModalCreateColumn: React.FC<IModalCreateColumn> = ({
 const DraggableColumns: React.FC = () => {
   const {
     state: { tasks },
-    actions: {
-      addTask,
-      reorderTasks,
-      clearTasks,
-      removeTask,
-      reorderColumns,
-      removeColumn,
-    },
+    actions: { addTask, reorderTasks, clearTasks, removeTask, removeColumn },
   } = useTaskStore();
 
   const [search, setSearch] = useState<string>("");
@@ -153,17 +146,19 @@ const DraggableColumns: React.FC = () => {
   const columns = Object.values(tasks);
 
   return (
-    <section className="flex flex-col gap-6 p-4 bg-background min-h-screen mt-20">
+    <section className="flex flex-col items-center justify-center gap-6 p-4 bg-background sm:min-h-screen max-sm:mt-20">
       <div className="w-full max-w-lg mx-auto flex flex-col gap-3">
-        <Input
-          type="text"
-          value={search}
-          onChange={handleSearch}
-          placeholder="Search tasks..."
-          className="text-sm"
-          disabled={!columns.length}
-        />
-        {JSON.stringify(columns)}
+        <div className="relative">
+          <Input
+            type="text"
+            value={search}
+            onChange={handleSearch}
+            placeholder="Search tasks..."
+            className="text-sm pl-8"
+            disabled={!columns.length}
+          />
+          <Search className="absolute h-4 w-4 text-muted-foreground right-5 left-2 top-1/2 -translate-y-1/2" />
+        </div>
         <div className="flex gap-2">
           <Input
             type="text"
@@ -172,8 +167,9 @@ const DraggableColumns: React.FC = () => {
             placeholder="Add new task..."
             className="text-sm flex-2/3"
           />
-          <Button onClick={handleCreate} className="flex-1/3">
-            Add
+          <Button onClick={handleCreate} className="relative">
+            <span className="flex-1/3 pl-4">Add</span>
+            <PlusCircle className="absolute text-secondary h-4 w-4 right-5 left-2 top-1/2 -translate-y-1/2" />
           </Button>
         </div>
         <ModalCreateColumn
@@ -185,7 +181,7 @@ const DraggableColumns: React.FC = () => {
       </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="flex gap-8 justify-center max-sm:flex-col">
+        <div className="flex w-full gap-8 justify-center max-sm:flex-col">
           {Object.values(tasks).map((column) => {
             const filteredTasks = column.tasks.filter((task: ITask) =>
               task.content.toLowerCase().includes(search)
@@ -197,7 +193,7 @@ const DraggableColumns: React.FC = () => {
                   <Card
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className="w-full sm:w-72 lg:w-96"
+                    className="w-full sm:w-72 md:w-80 lg:w-96"
                   >
                     <CardHeader className="relative group/column">
                       <CardTitle>{column.title}</CardTitle>
@@ -213,9 +209,7 @@ const DraggableColumns: React.FC = () => {
                             <X />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Delete column</p>
-                        </TooltipContent>
+                        <TooltipContent>Delete column</TooltipContent>
                       </Tooltip>
                     </CardHeader>
                     <CardContent>
