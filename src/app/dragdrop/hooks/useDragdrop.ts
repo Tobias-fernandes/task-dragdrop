@@ -4,7 +4,7 @@ import { ITask } from "@/shared/types/tasks";
 import { useTaskStore } from "@/store/tasks";
 import { formatText } from "@/shared/utils/formatText";
 
-const DragDrop = () => {
+const useDragDrop = () => {
   const {
     actions: { addTask, reorderColumns },
   } = useTaskStore();
@@ -46,4 +46,4 @@ const DragDrop = () => {
   };
 };
 
-export { DragDrop };
+export { useDragDrop };

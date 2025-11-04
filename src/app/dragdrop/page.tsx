@@ -4,13 +4,24 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { ITask } from "@/shared/types/tasks";
+import { ITask, ITasks } from "@/shared/types/tasks";
 import { X } from "lucide-react";
 import ModalCreateColumn from "./components/ModalCreateColumn";
-import { DragDrop } from "./hooks/dragdrop";
+import { useDragDrop } from "./hooks/useDragdrop";
 import { useTaskStore } from "@/store/tasks";
 
+// tests
+import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { useModalCreateColumn } from "./components/ModalCreateColumn/hooks/useModalCreateColumn";
+//
+
 const DraggableColumns: React.FC = () => {
+  const { newColumnName } = useModalCreateColumn();
+
+  const [newNameColumn, setNewNameColumn] = useState<string>("");
+  console.log("New Column Name:", newColumnName);
+
   const {
     search,
     newTaskContent,
@@ -20,15 +31,75 @@ const DraggableColumns: React.FC = () => {
     handleNewTaskContentChange,
     handleCreate,
     handleDragEnd,
-  } = DragDrop();
+  } = useDragDrop();
 
   const {
     state: { tasks },
-    actions: { clearTasks, removeTask },
+    actions: { clearTasks, removeTask, setTasks },
   } = useTaskStore();
 
+  const wsRef = useRef<WebSocket | null>(null);
+  const isUpdatingFromServer = useRef(false);
+
+  useEffect(() => {
+    const socket = new WebSocket(
+      `ws://localhost:${process.env.WS_SERVER_PORT || 8080}`
+    );
+
+    socket.onopen = () => console.log("WebSocket connection established");
+
+    socket.onmessage = (event) => {
+      try {
+        const parsed = JSON.parse(event.data);
+        isUpdatingFromServer.current = true; // <-- marca que veio do servidor
+        setTasks(parsed as ITasks);
+      } catch (err) {
+        toast.error(`Failed to parse WebSocket message: ${err}`);
+      } finally {
+        setTimeout(() => {
+          isUpdatingFromServer.current = false; // <-- limpa após 100ms
+        }, 100);
+      }
+    };
+
+    socket.onclose = () => console.log("WebSocket connection closed");
+
+    wsRef.current = socket;
+    return () => socket.close();
+  }, [setTasks]);
+
+  const createColumnWs = () => {
+    const socket = wsRef.current;
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      const message = {
+        event: "newColumn",
+        data: {
+          title: newNameColumn,
+        },
+      };
+
+      socket.send(JSON.stringify(message));
+    }
+  };
+  const sendMessage = useCallback(() => {
+    const socket = wsRef.current;
+    if (
+      socket &&
+      socket.readyState === WebSocket.OPEN &&
+      tasks &&
+      !isUpdatingFromServer.current // ✅ só envia se não veio do servidor
+    ) {
+      socket.send(JSON.stringify(tasks));
+    }
+  }, [tasks]);
+
+  useEffect(() => {
+    sendMessage();
+  }, [sendMessage]);
+
   return (
-    <section className="flex flex-col gap-6 p-8 bg-background min-h-screen mt-20">
+    <section className="flex flex-col gap-6 p-8 bg-background min-h-screen mt-48">
+      <h1 className="text-white">{newColumnName ?? "aqui"}</h1>
       <div className="w-full max-w-lg mx-auto flex flex-col gap-3">
         <Input
           type="text"
@@ -37,7 +108,7 @@ const DraggableColumns: React.FC = () => {
           placeholder="Search tasks..."
           className="text-sm"
         />
-
+        <Button onClick={createColumnWs}>Send Tasks to Server</Button>
         <div className="flex gap-2">
           <Input
             type="text"
@@ -55,76 +126,16 @@ const DraggableColumns: React.FC = () => {
             title="Create New Column"
             className="flex-1"
             buttonClassname="w-full"
+            newNameColumn={newNameColumn}
+            setNewNameColumn={setNewNameColumn}
+            createColumnWs={createColumnWs}
           />
-          <Button onClick={clearTasks} className="">
-            Clear All
-          </Button>
+          <Button onClick={clearTasks}>Clear All</Button>
         </div>
       </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="flex gap-8 justify-center flex-wrap">
-          {Object.values(tasks).map((column) => {
-            const filteredTasks = column.tasks.filter((task: ITask) =>
-              task.content.toLowerCase().includes(search)
-            );
-
-            return (
-              <Droppable key={column.id} droppableId={column.id}>
-                {(provided) => (
-                  <Card
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    className="w-64"
-                  >
-                    <CardHeader>
-                      <CardTitle>{column.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {!filteredTasks.length && (
-                        <p className="text-sm text-muted-foreground italic">
-                          No tasks found.
-                        </p>
-                      )}
-
-                      {filteredTasks.map((task: ITask, index: number) => (
-                        <Draggable
-                          key={task.id}
-                          draggableId={task.id}
-                          index={index}
-                        >
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              className={`group relative p-3 pr-10 mb-2 rounded-md text-sm border transition-colors ${
-                                snapshot.isDragging
-                                  ? "bg-primary/20 border-primary"
-                                  : "bg-muted"
-                              }`}
-                            >
-                              {formatText(task.content)}
-                              <Button
-                                variant="ghost"
-                                onClick={() => removeTask(column.id, task.id)}
-                                className="absolute md:hidden md:group-hover:flex right-2 -translate-y-1/2 top-1/2 p-0 max-sm:text-red-500 hover:text-red-500"
-                              >
-                                <X />
-                              </Button>
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-
-                      {provided.placeholder}
-                    </CardContent>
-                  </Card>
-                )}
-              </Droppable>
-            );
-          })}
-        </div>
+        <div className="flex gap-8 justify-center flex-wrap">{/* ? */}</div>
       </DragDropContext>
     </section>
   );

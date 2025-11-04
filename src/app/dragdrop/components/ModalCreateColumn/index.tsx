@@ -17,15 +17,18 @@ import { useModalCreateColumn } from "./hooks/useModalCreateColumn";
 const ModalCreateColumn: React.FC<IModalCreateColumn> = ({
   title,
   buttonClassname,
+  newNameColumn,
+  setNewNameColumn,
+  createColumnWs,
   ...props
 }) => {
   const {
     dialog,
-    newColumnName,
+    // newColumnName,
 
     setDialog,
     handleCreateColumn,
-    setNewColumnName,
+    // setNewColumnName,
   } = useModalCreateColumn();
 
   return (
@@ -52,15 +55,15 @@ const ModalCreateColumn: React.FC<IModalCreateColumn> = ({
               <Label htmlFor="newColumn">Column name</Label>
               <Input
                 id="newColumn"
-                value={newColumnName}
-                onChange={(e) => setNewColumnName(e.target.value)}
+                value={newNameColumn}
+                onChange={(e) => setNewNameColumn(e.target.value)}
               />
             </div>
             <DialogFooter>
               <DialogClose asChild>
                 <Button variant="outline">Cancel</Button>
               </DialogClose>
-              <Button type="submit" onClick={handleCreateColumn}>
+              <Button type="submit" onClick={() => handleCreateColumn(createColumnWs)}>
                 Create
               </Button>
             </DialogFooter>

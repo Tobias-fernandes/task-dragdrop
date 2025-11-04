@@ -9,12 +9,12 @@ const useModalCreateColumn = () => {
   const [newColumnName, setNewColumnName] = useState<string>("");
   const [dialog, setDialog] = useState<boolean>(false);
 
-  const handleCreateColumn = () => {
+  const handleCreateColumn = (createColumnWs: () => void) => {
     try {
-      createColumn(newColumnName);
       setNewColumnName("");
       setDialog(false);
-      toast.success("Task has been created");
+      createColumnWs();
+      toast.success("Column has been created");
     } catch (err) {
       toast.error(`Something went wrong: ${err}`);
     }
