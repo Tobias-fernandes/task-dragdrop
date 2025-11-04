@@ -1,26 +1,134 @@
 "use client";
 
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  DropResult,
+} from "@hello-pangea/dnd";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { ITask } from "@/shared/types/tasks";
+import { ITask, ITasks } from "@/shared/types/tasks";
 import { X } from "lucide-react";
-import ModalCreateColumn from "./components/ModalCreateColumn";
-import { DragDrop } from "./hooks/dragdrop";
+import { ChangeEvent, useEffect, useState } from "react";
+import { formatText } from "@/shared/utils/formatText";
+
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { HTMLAttributes } from "react";
 import { useTaskStore } from "@/store/tasks";
+import { Input } from "@/components/ui/input";
+
+interface IModalCreateColumn extends HTMLAttributes<HTMLDivElement> {
+  title: string;
+  buttonClassname?: string;
+}
+
+const ModalCreateColumn: React.FC<IModalCreateColumn> = ({
+  title,
+  buttonClassname,
+  ...props
+}) => {
+  const {
+    actions: { createColumn },
+  } = useTaskStore();
+
+  const [newColumnName, setNewColumnName] = useState<string>("");
+  const [dialog, setDialog] = useState<boolean>(false);
+
+  const handleCreateColumn = () => {
+    try {
+      createColumn(newColumnName);
+      setNewColumnName("");
+      setDialog(false);
+      toast.success("Task has been created");
+    } catch (err) {
+      toast.error(`Something went wrong: ${err}`);
+    }
+  };
+  return (
+    <div {...props}>
+      <Dialog open={dialog} onOpenChange={setDialog}>
+        <form>
+          <DialogTrigger asChild>
+            <Button
+              className={buttonClassname}
+              variant="outline"
+              onClick={() => setDialog(true)}
+            >
+              {title}
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>{title}</DialogTitle>
+              <DialogDescription>
+                Insert below the name of the new column to be created.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col gap-2 mb-4">
+              <Label htmlFor="newColumn">Column name</Label>
+              <Input
+                id="newColumn"
+                value={newColumnName}
+                onChange={(e) => setNewColumnName(e.target.value)}
+              />
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DialogClose>
+              <Button type="submit" onClick={handleCreateColumn}>
+                Create
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </form>
+      </Dialog>
+    </div>
+  );
+};
 
 const DraggableColumns: React.FC = () => {
-  const {
-    search,
-    newTaskContent,
 
-    formatText,
-    handleSearch,
-    handleNewTaskContentChange,
-    handleCreate,
-    handleDragEnd,
-  } = DragDrop();
+  const {
+    actions: { addTask, reorderColumns },
+  } = useTaskStore();
+
+  const [search, setSearch] = useState<string>("");
+  const [newTaskContent, setNewTaskContent] = useState<string>("");
+
+  const handleSearch = (e: ChangeEvent<HTMLInputElement>) =>
+    setSearch(e.target.value.toLowerCase());
+
+  const handleNewTaskContentChange = (e: ChangeEvent<HTMLInputElement>) =>
+    setNewTaskContent(e.target.value);
+
+  const handleCreate = () => {
+    if (!newTaskContent.trim()) return;
+
+    const newTask: ITask = {
+      id: `task-${Date.now()}`,
+      content: newTaskContent.trim(),
+    };
+    addTask("todo", newTask);
+
+    setNewTaskContent("");
+  };
+
+  const handleDragEnd = (result: DropResult) => {
+    reorderColumns(result);
+  };
 
   const {
     state: { tasks },

@@ -10,6 +10,7 @@ interface ITaskState {
     clearTasks: () => void;
     reorderColumns: (result: DropResult) => void;
     createColumn: (title: string, id?: string) => void;
+    setTasks: (tasks: ITasks) => void;
   };
 }
 

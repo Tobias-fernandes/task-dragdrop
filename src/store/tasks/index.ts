@@ -126,6 +126,13 @@ const useTaskStore = create<ITaskState>((set) => ({
           },
         };
       }),
+      
+    setTasks: (tasks: ITasks) =>
+      set(() => ({
+        state: {
+          tasks,
+        },
+      })),
   },
 }));
 
