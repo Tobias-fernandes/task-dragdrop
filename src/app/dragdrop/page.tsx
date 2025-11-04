@@ -134,6 +134,7 @@ const DraggableColumns: React.FC = () => {
       addTask(firstColumnId, newTask);
 
       setNewTaskContent("");
+      toast.success("Task has been created");
     } catch (err) {
       toast.error(`Something went wrong: ${err}`);
     }
