@@ -7,9 +7,9 @@ import {
   DropResult,
 } from "@hello-pangea/dnd";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { ITask, ITasks } from "@/shared/types/tasks";
-import { X } from "lucide-react";
-import { ChangeEvent, useEffect, useState } from "react";
+import { ITask } from "@/shared/types/tasks";
+import { X, GripVertical } from "lucide-react";
+import { ChangeEvent, useState } from "react";
 import { formatText } from "@/shared/utils/formatText";
 
 import { Button } from "@/components/ui/button";
@@ -23,11 +23,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { HTMLAttributes } from "react";
 import { useTaskStore } from "@/store/tasks";
 import { Input } from "@/components/ui/input";
+import { getFirstColumn } from "@/shared/utils/getFirstColumn";
 
 interface IModalCreateColumn extends HTMLAttributes<HTMLDivElement> {
   title: string;
@@ -100,9 +106,16 @@ const ModalCreateColumn: React.FC<IModalCreateColumn> = ({
 };
 
 const DraggableColumns: React.FC = () => {
-
   const {
-    actions: { addTask, reorderColumns },
+    state: { tasks },
+    actions: {
+      addTask,
+      reorderTasks,
+      clearTasks,
+      removeTask,
+      reorderColumns,
+      removeColumn,
+    },
   } = useTaskStore();
 
   const [search, setSearch] = useState<string>("");
@@ -115,28 +128,32 @@ const DraggableColumns: React.FC = () => {
     setNewTaskContent(e.target.value);
 
   const handleCreate = () => {
-    if (!newTaskContent.trim()) return;
+    try {
+      if (!newTaskContent.trim())
+        throw new Error("Task content cannot be empty");
 
-    const newTask: ITask = {
-      id: `task-${Date.now()}`,
-      content: newTaskContent.trim(),
-    };
-    addTask("todo", newTask);
+      const newTask: ITask = {
+        id: `task-${Date.now()}`,
+        content: newTaskContent.trim(),
+      };
 
-    setNewTaskContent("");
+      const firstColumnId = getFirstColumn(tasks);
+      addTask(firstColumnId, newTask);
+
+      setNewTaskContent("");
+    } catch (err) {
+      toast.error(`Something went wrong: ${err}`);
+    }
   };
 
   const handleDragEnd = (result: DropResult) => {
-    reorderColumns(result);
+    reorderTasks(result);
   };
 
-  const {
-    state: { tasks },
-    actions: { clearTasks, removeTask },
-  } = useTaskStore();
+  const columns = Object.values(tasks);
 
   return (
-    <section className="flex flex-col gap-6 p-8 bg-background min-h-screen mt-20">
+    <section className="flex flex-col gap-6 p-4 bg-background min-h-screen mt-20">
       <div className="w-full max-w-lg mx-auto flex flex-col gap-3">
         <Input
           type="text"
@@ -144,34 +161,31 @@ const DraggableColumns: React.FC = () => {
           onChange={handleSearch}
           placeholder="Search tasks..."
           className="text-sm"
+          disabled={!columns.length}
         />
-
+        {JSON.stringify(columns)}
         <div className="flex gap-2">
           <Input
             type="text"
             value={newTaskContent}
             onChange={handleNewTaskContentChange}
             placeholder="Add new task..."
-            className="text-sm"
+            className="text-sm flex-2/3"
           />
-          <Button onClick={handleCreate} className="whitespace-nowrap">
+          <Button onClick={handleCreate} className="flex-1/3">
             Add
           </Button>
         </div>
-        <div className="flex gap-2">
-          <ModalCreateColumn
-            title="Create New Column"
-            className="flex-1"
-            buttonClassname="w-full"
-          />
-          <Button onClick={clearTasks} className="">
-            Clear All
-          </Button>
-        </div>
+        <ModalCreateColumn
+          title="Create New Column"
+          className="flex-1"
+          buttonClassname="w-full"
+        />
+        <Button onClick={clearTasks}>Clear All</Button>
       </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="flex gap-8 justify-center flex-wrap">
+        <div className="flex gap-8 justify-center max-sm:flex-col">
           {Object.values(tasks).map((column) => {
             const filteredTasks = column.tasks.filter((task: ITask) =>
               task.content.toLowerCase().includes(search)
@@ -183,10 +197,26 @@ const DraggableColumns: React.FC = () => {
                   <Card
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className="w-64"
+                    className="w-full sm:w-72 lg:w-96"
                   >
-                    <CardHeader>
+                    <CardHeader className="relative group/column">
                       <CardTitle>{column.title}</CardTitle>
+
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeColumn(column.id)}
+                            className="absolute md:group-hover:flex right-2 -top-2 p-0 max-md:text-red-500 md:hover:text-red-500"
+                          >
+                            <X />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Delete column</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </CardHeader>
                     <CardContent>
                       {!filteredTasks.length && (
@@ -205,18 +235,28 @@ const DraggableColumns: React.FC = () => {
                             <div
                               ref={provided.innerRef}
                               {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              className={`group relative p-3 pr-10 mb-2 rounded-md text-sm border transition-colors ${
+                              className={`group relative p-3 mb-2 rounded-md text-sm border transition-colors ${
                                 snapshot.isDragging
                                   ? "bg-primary/20 border-primary"
                                   : "bg-muted"
                               }`}
                             >
-                              {formatText(task.content)}
+                              <div {...provided.dragHandleProps}>
+                                <GripVertical
+                                  className="absolute left-2 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing border rounded"
+                                  size={20}
+                                  color="gray"
+                                />
+                              </div>
+
+                              <span className="font-medium pl-5">
+                                {formatText(task.content)}
+                              </span>
+
                               <Button
                                 variant="ghost"
                                 onClick={() => removeTask(column.id, task.id)}
-                                className="absolute md:hidden md:group-hover:flex right-2 -translate-y-1/2 top-1/2 p-0 max-sm:text-red-500 hover:text-red-500"
+                                className="absolute md:hidden md:group-hover:flex right-0 -translate-y-1/2 top-1/2 p-0 max-md:text-red-500 md:hover:text-red-500"
                               >
                                 <X />
                               </Button>

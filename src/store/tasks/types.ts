@@ -5,12 +5,14 @@ interface ITaskState {
     tasks: ITasks;
   };
   actions: {
+    setTasks: (tasks: ITasks) => void;
     addTask: (columnId: string, task: ITask) => void;
+    reorderTasks: (result: DropResult) => void;
     removeTask: (columnId: string, taskId: string) => void;
     clearTasks: () => void;
-    reorderColumns: (result: DropResult) => void;
     createColumn: (title: string, id?: string) => void;
-    setTasks: (tasks: ITasks) => void;
+    reorderColumns: (startIndex: number, endIndex: number) => void;
+    removeColumn: (columnId: string) => void;
   };
 }
 

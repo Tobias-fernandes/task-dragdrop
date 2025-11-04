@@ -12,8 +12,8 @@ interface Column {
 type Columns = Record<string, Column>;
 
 type Tasks = Columns & {
-  todo: Column;
-  doing: Column;
+  todo?: Column;
+  doing?: Column;
 };
 
 type ITask = Task;

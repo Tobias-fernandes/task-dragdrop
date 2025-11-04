@@ -10,55 +10,36 @@ const useTaskStore = create<ITaskState>((set) => ({
     tasks: initialTasks,
   },
   actions: {
-    addTask: (columnId: keyof ITasks, task: ITask) =>
-      set((state) => ({
-        state: {
-          ...state.state,
-          tasks: {
-            ...state.state.tasks,
-            [columnId]: {
-              ...state.state.tasks[columnId],
-              tasks: [...state.state.tasks[columnId].tasks, task],
-            },
-          },
-        },
-      })),
-
-    removeTask: (columnId: keyof ITasks, taskId: string) =>
-      set((state) => ({
-        state: {
-          ...state.state,
-          tasks: {
-            ...state.state.tasks,
-            [columnId]: {
-              ...state.state.tasks[columnId],
-              tasks: state.state.tasks[columnId].tasks.filter(
-                (t: ITask) => t.id !== taskId
-              ),
-            },
-          },
-        },
-      })),
-
-    clearTasks: () =>
+    setTasks: (tasks: ITasks) =>
       set(() => ({
         state: {
-          tasks: {
-            todo: {
-              id: "todo",
-              title: "To Do",
-              tasks: [],
-            },
-            doing: {
-              id: "doing",
-              title: "Doing",
-              tasks: [],
-            },
-          },
+          tasks,
         },
       })),
 
-    reorderColumns: (result) =>
+    addTask: (columnId: keyof ITasks, task: ITask) =>
+      set((state) => {
+        if (!state.state.tasks[columnId]) {
+          throw new Error("Column not found");
+        }
+        if (!task.content) {
+          throw new Error("Task content cannot be empty");
+        }
+        return {
+          state: {
+            ...state.state,
+            tasks: {
+              ...state.state.tasks,
+              [columnId]: {
+                ...state.state.tasks[columnId],
+                tasks: [...state.state.tasks[columnId].tasks, task],
+              },
+            },
+          },
+        };
+      }),
+
+    reorderTasks: (result) =>
       set((state) => {
         const { source, destination } = result;
         if (!destination) return state;
@@ -107,10 +88,44 @@ const useTaskStore = create<ITaskState>((set) => ({
         return state;
       }),
 
+    removeTask: (columnId: keyof ITasks, taskId: string) =>
+      set((state) => ({
+        state: {
+          ...state.state,
+          tasks: {
+            ...state.state.tasks,
+            [columnId]: {
+              ...state.state.tasks[columnId],
+              tasks: state.state.tasks[columnId].tasks.filter(
+                (t: ITask) => t.id !== taskId
+              ),
+            },
+          },
+        },
+      })),
+
+    clearTasks: () =>
+      set(() => ({
+        state: {
+          tasks: {
+            todo: {
+              id: "todo",
+              title: "To Do",
+              tasks: [],
+            },
+            doing: {
+              id: "doing",
+              title: "Doing",
+              tasks: [],
+            },
+          },
+        },
+      })),
+
     createColumn: (title, id = `column-${Date.now()}`) =>
       set((state) => {
-        if (!title || !id) {
-          throw new Error("Title and ID are required to create a column");
+        if (!title) {
+          throw new Error("Name is required to create a column");
         }
         return {
           state: {
@@ -126,13 +141,37 @@ const useTaskStore = create<ITaskState>((set) => ({
           },
         };
       }),
-      
-    setTasks: (tasks: ITasks) =>
-      set(() => ({
-        state: {
-          tasks,
-        },
-      })),
+
+    reorderColumns: (startIndex, endIndex) =>
+      set((state) => {
+        const columns = Object.values(state.state.tasks);
+        const [removed] = columns.splice(startIndex, 1);
+        columns.splice(endIndex, 0, removed);
+
+        const newTasksOrder: ITasks = {};
+        columns.forEach((col) => {
+          newTasksOrder[col.id] = col;
+        });
+
+        return {
+          state: {
+            ...state.state,
+            tasks: newTasksOrder,
+          },
+        };
+      }),
+
+    removeColumn: (columnId: string) =>
+      set((state) => {
+        const updatedTasks = { ...state.state.tasks };
+        delete updatedTasks[columnId];
+        return {
+          state: {
+            ...state.state,
+            tasks: updatedTasks,
+          },
+        };
+      }),
   },
 }));
 
